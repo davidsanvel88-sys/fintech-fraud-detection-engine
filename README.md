@@ -237,7 +237,13 @@ alerting:
 
 ## 📊 Dashboard Ejecutivo
 
-El motor genera automáticamente un **dashboard HTML interactivo** (`dashboard.html`) con las siguientes visualizaciones:
+El motor genera automáticamente un **dashboard HTML interactivo** (`dashboard.html`) con paleta ejecutiva, zona horaria Centro de México y gráficos interactivos:
+
+<p align="center">
+  <img src="docs/dashboard_preview.png" alt="Dashboard Ejecutivo — Motor de Detección de Fraude" width="900">
+</p>
+
+### Visualizaciones incluidas
 
 | # | Gráfico | Tipo | Descripción |
 |---|---------|------|-------------|
