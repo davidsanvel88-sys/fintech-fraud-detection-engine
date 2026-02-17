@@ -5,6 +5,7 @@
 ![License](https://img.shields.io/badge/Licencia-MIT-green)
 ![Tests](https://img.shields.io/badge/Tests-32%20Passing-brightgreen?logo=pytest)
 ![SOLID](https://img.shields.io/badge/Diseño-Principios%20SOLID-orange)
+[![Dashboard](https://img.shields.io/badge/🔗_Dashboard_Interactivo-Ver_Demo-gold)](https://davidsanvel88-sys.github.io/fintech-fraud-detection-engine/dashboard.html)
 
 > **Motor de detección de fraude de nivel producción**, config-driven, construido con principios SOLID y el Strategy Pattern para evaluar riesgo transaccional en tiempo real.
 
@@ -241,6 +242,12 @@ El motor genera automáticamente un **dashboard HTML interactivo** (`dashboard.h
 
 <p align="center">
   <img src="docs/dashboard_preview.png" alt="Dashboard Ejecutivo — Motor de Detección de Fraude" width="900">
+</p>
+
+<p align="center">
+  <a href="https://davidsanvel88-sys.github.io/fintech-fraud-detection-engine/dashboard.html">
+    <img src="https://img.shields.io/badge/🔗_Ver_Dashboard_Interactivo-En_Vivo-gold?style=for-the-badge" alt="Ver Dashboard">
+  </a>
 </p>
 
 ### Visualizaciones incluidas

@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motor de Detección de Fraude — Dashboard Ejecutivo</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Executive palette — deep navy, slate, gold, teal */
+  --bg-primary: #0b1120;
+  --bg-secondary: #0f1729;
+  --bg-card: #141d2f;
+  --bg-card-alt: #182338;
+  --border: #1e2d45;
+  --border-accent: #2a3f5f;
+  --text-primary: #e8ecf4;
+  --text-secondary: #8899b3;
+  --text-muted: #5a6d87;
+
+  /* Executive accent colors */
+  --gold: #d4a843;
+  --gold-dim: rgba(212,168,67,0.15);
+  --teal: #2ec4b6;
+  --teal-dim: rgba(46,196,182,0.12);
+  --navy: #4a7cce;
+  --navy-dim: rgba(74,124,206,0.12);
+  --crimson: #dc3545;
+  --crimson-dim: rgba(220,53,69,0.12);
+  --amber: #e8913a;
+  --amber-dim: rgba(232,145,58,0.12);
+  --slate-blue: #6c7ea0;
+  --steel: #3d5a80;
+  --pearl: #c9d6e3;
+
+  /* Gradients */
+  --grad-gold: linear-gradient(135deg, #d4a843 0%, #b8892e 100%);
+  --grad-navy: linear-gradient(135deg, #4a7cce 0%, #3461a8 100%);
+  --grad-teal: linear-gradient(135deg, #2ec4b6 0%, #1fa393 100%);
+  --grad-crimson: linear-gradient(135deg, #dc3545 0%, #b82d3a 100%);
+
+  --shadow: 0 2px 16px rgba(0,0,0,0.35);
+  --shadow-hover: 0 6px 28px rgba(0,0,0,0.45);
+  --radius: 12px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse at 15% 10%, rgba(74,124,206,0.06) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 90%, rgba(212,168,67,0.04) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.dash { position:relative; z-index:1; padding:20px 24px; max-width:1560px; margin:0 auto; }
+
+/* ── Header ── */
+.hdr {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:24px 32px; margin-bottom:22px;
+  background: var(--bg-card);
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  position:relative; overflow:hidden;
+}
+.hdr::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+  background: var(--grad-gold);
+}
+.hdr-left h1 {
+  font-size:1.55rem; font-weight:800; letter-spacing:-0.3px;
+  color: var(--gold);
+}
+.hdr-left .sub {
+  font-size:0.82rem; color:var(--text-secondary); margin-top:3px; font-weight:400;
+}
+.hdr-right {
+  text-align:right;
+}
+.hdr-right .ts {
+  font-size:0.72rem; color:var(--text-muted); font-weight:400;
+}
+.hdr-right .badge-live {
+  display:inline-block; padding:4px 14px; border-radius:50px;
+  font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:1px;
+  background: var(--teal-dim); color:var(--teal); border:1px solid rgba(46,196,182,0.25);
+  margin-bottom:6px;
+}
+
+/* ── KPI Row ── */
+.kpi { display:grid; grid-template-columns:repeat(6,1fr); gap:14px; margin-bottom:22px; }
+@media(max-width:1100px){ .kpi { grid-template-columns:repeat(3,1fr); } }
+@media(max-width:640px){ .kpi { grid-template-columns:repeat(2,1fr); } }
+
+.k {
+  background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius);
+  padding:20px 18px; text-align:center; box-shadow:var(--shadow);
+  transition: transform .2s, box-shadow .2s, border-color .3s;
+  position:relative; overflow:hidden;
+}
+.k:hover { transform:translateY(-3px); box-shadow:var(--shadow-hover); border-color:var(--border-accent); }
+.k::before { content:''; position:absolute; top:0; left:0; right:0; height:2.5px; }
+.k:nth-child(1)::before { background:var(--grad-teal); }
+.k:nth-child(2)::before { background:var(--grad-crimson); }
+.k:nth-child(3)::before { background:var(--grad-crimson); }
+.k:nth-child(4)::before { background:var(--grad-gold); }
+.k:nth-child(5)::before { background:var(--grad-navy); }
+.k:nth-child(6)::before { background:var(--grad-gold); }
+
+.k-label {
+  font-size:0.65rem; text-transform:uppercase; letter-spacing:1.8px;
+  color:var(--text-muted); font-weight:600; margin-bottom:8px;
+}
+.k-val {
+  font-size:2rem; font-weight:800; line-height:1; margin-bottom:4px;
+  font-variant-numeric: tabular-nums;
+}
+.k-sub { font-size:0.72rem; color:var(--text-secondary); }
+
+.k-val.v-teal    { color:var(--teal); }
+.k-val.v-crimson { color:var(--crimson); }
+.k-val.v-gold    { color:var(--gold); }
+.k-val.v-navy    { color:var(--navy); }
+.k-val.v-amber   { color:var(--amber); }
+
+/* ── Charts ── */
+.grid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-bottom:18px; }
+@media(max-width:1024px){ .grid { grid-template-columns:1fr; } }
+
+.card {
+  background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius);
+  padding:22px 24px; box-shadow:var(--shadow);
+  transition: border-color .3s;
+}
+.card:hover { border-color:var(--border-accent); }
+.card.full { grid-column:1/-1; }
+
+.card-t {
+  font-size:0.85rem; font-weight:700; color:var(--text-secondary);
+  text-transform:uppercase; letter-spacing:0.8px; margin-bottom:16px;
+  padding-bottom:10px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:8px;
+}
+.card-t .dot {
+  width:8px; height:8px; border-radius:50%; display:inline-block;
+}
+.cc { position:relative; width:100%; height:270px; }
+.cc.tall { height:340px; }
+
+/* ── Table ── */
+.tw { overflow-x:auto; margin-top:4px; }
+table { width:100%; border-collapse:collapse; font-size:0.78rem; }
+th {
+  background: var(--bg-card-alt);
+  color:var(--gold); font-weight:600; text-transform:uppercase;
+  font-size:0.65rem; letter-spacing:1.2px;
+  padding:11px 14px; text-align:left;
+  border-bottom:2px solid var(--border-accent);
+}
+td {
+  padding:9px 14px; border-bottom:1px solid var(--border);
+  color:var(--text-secondary); vertical-align:middle;
+}
+tr:hover td { background:rgba(74,124,206,0.04); color:var(--text-primary); }
+
+.badge {
+  display:inline-block; padding:3px 10px; border-radius:50px;
+  font-size:0.63rem; font-weight:700; text-transform:uppercase; letter-spacing:0.6px;
+}
+.badge.critico {
+  background:var(--crimson-dim); color:#f0616d; border:1px solid rgba(220,53,69,0.3);
+}
+.badge.alto {
+  background:var(--amber-dim); color:var(--amber); border:1px solid rgba(232,145,58,0.3);
+}
+.rtag {
+  display:inline-block; padding:2px 8px; border-radius:4px;
+  font-size:0.62rem; white-space:nowrap;
+  background:var(--navy-dim); color:var(--slate-blue);
+  border:1px solid rgba(74,124,206,0.18);
+  margin:1px 2px;
+}
+
+.foot {
+  text-align:center; padding:20px; color:var(--text-muted);
+  font-size:0.7rem; border-top:1px solid var(--border); margin-top:12px;
+}
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(14px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.k, .card { animation: fadeUp .45s ease forwards; }
+.k:nth-child(2){ animation-delay:.04s; }
+.k:nth-child(3){ animation-delay:.08s; }
+.k:nth-child(4){ animation-delay:.12s; }
+.k:nth-child(5){ animation-delay:.16s; }
+.k:nth-child(6){ animation-delay:.20s; }
+</style>
+</head>
+<body>
+<div class="dash">
+
+<!-- Header -->
+<div class="hdr">
+  <div class="hdr-left">
+    <h1>MOTOR DE DETECCI&Oacute;N DE FRAUDE</h1>
+    <div class="sub">Dashboard Ejecutivo &mdash; An&aacute;lisis de Riesgo en Tiempo Real</div>
+  </div>
+  <div class="hdr-right">
+    <div class="badge-live">&#9679; Reporte Generado</div><br>
+    <span class="ts">17 de febrero de 2026, 13:53:24 hrs (Centro de México)</span>
+  </div>
+</div>
+
+<!-- KPIs -->
+<div class="kpi">
+  <div class="k">
+    <div class="k-label">Total Procesado</div>
+    <div class="k-val v-teal">2,101</div>
+    <div class="k-sub">transacciones analizadas</div>
+  </div>
+  <div class="k">
+    <div class="k-label">Alertas de Fraude</div>
+    <div class="k-val v-crimson">39</div>
+    <div class="k-sub">1.86% tasa de fraude</div>
+  </div>
+  <div class="k">
+    <div class="k-label">Alertas Cr&iacute;ticas</div>
+    <div class="k-val v-crimson">19</div>
+    <div class="k-sub">puntuaci&oacute;n &ge; 120</div>
+  </div>
+  <div class="k">
+    <div class="k-label">Alertas Altas</div>
+    <div class="k-val v-amber">20</div>
+    <div class="k-sub">puntuaci&oacute;n 75 &ndash; 119</div>
+  </div>
+  <div class="k">
+    <div class="k-label">Puntuaci&oacute;n Promedio</div>
+    <div class="k-val v-navy">13.9</div>
+    <div class="k-sub">en todas las transacciones</div>
+  </div>
+  <div class="k">
+    <div class="k-label">Puntuaci&oacute;n M&aacute;xima</div>
+    <div class="k-val v-gold">135</div>
+    <div class="k-sub">riesgo m&aacute;s alto detectado</div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="grid">
+  <div class="card">
+    <div class="card-t"><span class="dot" style="background:var(--navy)"></span> Distribuci&oacute;n de Puntuaci&oacute;n de Riesgo</div>
+    <div class="cc"><canvas id="cScore"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-t"><span class="dot" style="background:var(--gold)"></span> Frecuencia de Activaci&oacute;n por Regla</div>
+    <div class="cc"><canvas id="cRule"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-t"><span class="dot" style="background:var(--crimson)"></span> Alertas por Hora del D&iacute;a</div>
+    <div class="cc"><canvas id="cHour"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-t"><span class="dot" style="background:var(--teal)"></span> Desglose de Nivel de Riesgo</div>
+    <div class="cc"><canvas id="cRisk"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-t"><span class="dot" style="background:var(--amber)"></span> Distribuci&oacute;n por Monto de Alerta</div>
+    <div class="cc"><canvas id="cAmount"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-t"><span class="dot" style="background:var(--steel)"></span> Alertas por Ubicaci&oacute;n</div>
+    <div class="cc"><canvas id="cLoc"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-t"><span class="dot" style="background:var(--navy)"></span> Fin de Semana vs Entre Semana</div>
+    <div class="cc"><canvas id="cWeek"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-t"><span class="dot" style="background:var(--gold)"></span> Alertas por Categor&iacute;a</div>
+    <div class="cc"><canvas id="cCat"></canvas></div>
+  </div>
+</div>
+
+<!-- Alerts Table -->
+<div class="grid">
+  <div class="card full">
+    <div class="card-t"><span class="dot" style="background:var(--crimson)"></span> Top 15 Transacciones de Mayor Riesgo</div>
+    <div class="tw">
+      <table id="tbl">
+        <thead><tr>
+          <th>ID Transacci&oacute;n</th><th>Usuario</th><th>Fecha y Hora</th>
+          <th>Monto</th><th>Ubicaci&oacute;n</th><th>Puntuaci&oacute;n</th>
+          <th>Nivel</th><th>Reglas Activadas</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="foot">
+  Motor de Detecci&oacute;n de Fraude &bull; Dashboard Ejecutivo &bull; Zona Horaria: Centro de M&eacute;xico (UTC-6)
+</div>
+
+</div>
+<script>
+const D={"generated_at": "17 de febrero de 2026, 13:53:24 hrs (Centro de México)", "summary": {"total": 2101, "alerts": 39, "fraud_rate": 1.86, "avg_score": 13.9, "max_score": 135, "critical": 19, "high": 20, "no_alert": 2062}, "rule_stats": {"NewDeviceRule": 505, "UnusualAmountRule": 251, "OddHoursRule": 140, "VelocityRule": 108, "HighAmountRule": 30, "LocationChangeRule": 6, "ForeignTxRule": 6}, "score_distribution": {"0": 1278, "1-25": 365, "26-50": 312, "51-75": 107, "76-100": 9, "101-150": 30, "150+": 0}, "alerts_by_hour": {"0": 0, "1": 0, "2": 0, "3": 30, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0, "11": 6, "12": 0, "13": 0, "14": 0, "15": 0, "16": 0, "17": 0, "18": 0, "19": 0, "20": 0, "21": 0, "22": 3, "23": 0}, "fraud_by_hour": {"0": 0, "1": 0, "2": 0, "3": 30, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0, "11": 6, "12": 0, "13": 0, "14": 0, "15": 0, "16": 0, "17": 0, "18": 0, "19": 0, "20": 0, "21": 0, "22": 3, "23": 0}, "legit_by_hour": {"0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 120, "9": 134, "10": 126, "11": 133, "12": 112, "13": 124, "14": 201, "15": 141, "16": 152, "17": 153, "18": 153, "19": 141, "20": 127, "21": 138, "22": 107, "23": 0}, "category_counts": {"Electronics": 32, "Shopping": 6, "Travel": 1}, "location_counts": {"Monterrey": 12, "Paris": 6, "Queretaro": 8, "Tijuana": 5, "CDMX": 3, "Guadalajara": 5}, "amount_ranges": {"$0-1K": 0, "$1K-5K": 0, "$5K-15K": 9, "$15K-30K": 14, "$30K+": 16}, "weekend_vs_weekday": {"Fin de semana": 11, "Entre semana": 28}, "risk_breakdown": {"CRÍTICO": 19, "ALTO": 20, "Limpia": 2062}, "top_alerts": [{"id": "1ec55761-3047-47", "user": "0468ca67", "amount": 43826.9, "score": 135, "level": "CRITICAL", "rules": ["HighAmountRule: +50", "OddHoursRule: +30", "UnusualAmountRule: +35", "NewDeviceRule: +20"], "hour": 3, "location": "Monterrey", "timestamp": "2023-04-09 03:33:00"}, {"id": "1ec55761-3047-47", "user": "0468ca67", "amount": 43826.9, "score": 135, "level": "CRITICAL", "rules": ["HighAmountRule: +50", "OddHoursRule: +30", "UnusualAmountRule: +35", "NewDeviceRule: +20"], "hour": 3, "location": "Monterrey", "timestamp": "2023-04-09 03:33:00"}, {"id": "42056f3e-8083-4e", "user": "279d5150", "amount": 37910.85, "score": 135, "level": "CRITICAL", "rules": ["HighAmountRule: +50", "OddHoursRule: +30", "UnusualAmountRule: +35", "NewDeviceRule: +20"], "hour": 3, "location": "Tijuana", "timestamp": "2023-03-30 03:07:00"}, {"id": "1ec55761-3047-47", "user": "0468ca67", "amount": 43826.9, "score": 135, "level": "CRITICAL", "rules": ["HighAmountRule: +50", "OddHoursRule: +30", "UnusualAmountRule: +35", "NewDeviceRule: +20"], "hour": 3, "location": "Monterrey", "timestamp": "2023-04-09 03:33:00"}, {"id": "982390ae-5ab9-48", "user": "008b12f7", "amount": 20449.79, "score": 135, "level": "CRITICAL", "rules": ["HighAmountRule: +50", "OddHoursRule: +30", "UnusualAmountRule: +35", "NewDeviceRule: +20"], "hour": 3, "location": "CDMX", "timestamp": "2023-04-14 03:24:00"}, {"id": "982390ae-5ab9-48", "user": "008b12f7", "amount": 20449.79, "score": 135, "level": "CRITICAL", "rules": ["HighAmountRule: +50", "OddHoursRule: +30", "UnusualAmountRule: +35", "NewDeviceRule: +20"], "hour": 3, "location": "CDMX", "timestamp": "2023-04-14 03:24:00"}, {"id": "982390ae-5ab9-48", "user": "008b12f7", "amount": 20449.79, "score": 135, "level": "CRITICAL", "rules": ["HighAmountRule: +50", "OddHoursRule: +30", "UnusualAmountRule: +35", "NewDeviceRule: +20"], "hour": 3, "location": "CDMX", "timestamp": "2023-04-14 03:24:00"}, {"id": "1ec55761-3047-47", "user": "0468ca67", "amount": 43826.9, "score": 135, "level": "CRITICAL", "rules": ["HighAmountRule: +50", "OddHoursRule: +30", "UnusualAmountRule: +35", "NewDeviceRule: +20"], "hour": 3, "location": "Monterrey", "timestamp": "2023-04-09 03:33:00"}, {"id": "1ec55761-3047-47", "user": "0468ca67", "amount": 43826.9, "score": 135, "level": "CRITICAL", "rules": ["HighAmountRule: +50", "OddHoursRule: +30", "UnusualAmountRule: +35", "NewDeviceRule: +20"], "hour": 3, "location": "Monterrey", "timestamp": "2023-04-09 03:33:00"}, {"id": "42056f3e-8083-4e", "user": "279d5150", "amount": 37910.85, "score": 135, "level": "CRITICAL", "rules": ["HighAmountRule: +50", "OddHoursRule: +30", "UnusualAmountRule: +35", "NewDeviceRule: +20"], "hour": 3, "location": "Tijuana", "timestamp": "2023-03-30 03:07:00"}, {"id": "1ec55761-3047-47", "user": "0468ca67", "amount": 43826.9, "score": 135, "level": "CRITICAL", "rules": ["HighAmountRule: +50", "OddHoursRule: +30", "UnusualAmountRule: +35", "NewDeviceRule: +20"], "hour": 3, "location": "Monterrey", "timestamp": "2023-04-09 03:33:00"}, {"id": "1ec55761-3047-47", "user": "0468ca67", "amount": 43826.9, "score": 135, "level": "CRITICAL", "rules": ["HighAmountRule: +50", "OddHoursRule: +30", "UnusualAmountRule: +35", "NewDeviceRule: +20"], "hour": 3, "location": "Monterrey", "timestamp": "2023-04-09 03:33:00"}, {"id": "1ec55761-3047-47", "user": "0468ca67", "amount": 43826.9, "score": 135, "level": "CRITICAL", "rules": ["HighAmountRule: +50", "OddHoursRule: +30", "UnusualAmountRule: +35", "NewDeviceRule: +20"], "hour": 3, "location": "Monterrey", "timestamp": "2023-04-09 03:33:00"}, {"id": "1ec55761-3047-47", "user": "0468ca67", "amount": 43826.9, "score": 135, "level": "CRITICAL", "rules": ["HighAmountRule: +50", "OddHoursRule: +30", "UnusualAmountRule: +35", "NewDeviceRule: +20"], "hour": 3, "location": "Monterrey", "timestamp": "2023-04-09 03:33:00"}, {"id": "42056f3e-8083-4e", "user": "279d5150", "amount": 37910.85, "score": 135, "level": "CRITICAL", "rules": ["HighAmountRule: +50", "OddHoursRule: +30", "UnusualAmountRule: +35", "NewDeviceRule: +20"], "hour": 3, "location": "Tijuana", "timestamp": "2023-03-30 03:07:00"}]};
+
+/* Chart.js Defaults — Executive theme */
+Chart.defaults.color='#8899b3';
+Chart.defaults.borderColor='rgba(30,45,69,0.6)';
+Chart.defaults.font.family="'Inter',sans-serif";
+Chart.defaults.font.size=11;
+Chart.defaults.plugins.legend.labels.usePointStyle=true;
+Chart.defaults.plugins.legend.labels.pointStyle='circle';
+Chart.defaults.plugins.legend.labels.padding=14;
+Chart.defaults.plugins.tooltip.backgroundColor='#1a2744';
+Chart.defaults.plugins.tooltip.titleColor='#d4a843';
+Chart.defaults.plugins.tooltip.bodyColor='#c9d6e3';
+Chart.defaults.plugins.tooltip.borderColor='#2a3f5f';
+Chart.defaults.plugins.tooltip.borderWidth=1;
+Chart.defaults.plugins.tooltip.cornerRadius=8;
+Chart.defaults.plugins.tooltip.padding=10;
+
+/* Executive color palette */
+const C={
+  navy:'rgba(74,124,206,0.85)',   teal:'rgba(46,196,182,0.85)',
+  gold:'rgba(212,168,67,0.85)',   crimson:'rgba(220,53,69,0.85)',
+  amber:'rgba(232,145,58,0.85)',  steel:'rgba(61,90,128,0.85)',
+  slate:'rgba(108,126,160,0.85)', pearl:'rgba(160,180,200,0.8)',
+};
+const P=[C.navy,C.teal,C.gold,C.crimson,C.amber,C.steel,C.slate,C.pearl];
+const gridC='rgba(30,45,69,0.4)';
+
+/* 1 — Distribución Score */
+new Chart(document.getElementById('cScore'),{
+  type:'bar',
+  data:{
+    labels:Object.keys(D.score_distribution),
+    datasets:[{
+      label:'Transacciones',
+      data:Object.values(D.score_distribution),
+      backgroundColor:[C.teal,C.navy,C.steel,C.gold,C.amber,C.crimson,'rgba(180,50,60,0.85)'],
+      borderRadius:5, borderSkipped:false,
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      y:{beginAtZero:true,grid:{color:gridC},ticks:{font:{size:10}}},
+      x:{grid:{display:false},ticks:{font:{size:10}}}
+    }
+  }
+});
+
+/* 2 — Reglas */
+new Chart(document.getElementById('cRule'),{
+  type:'bar',
+  data:{
+    labels:Object.keys(D.rule_stats),
+    datasets:[{
+      label:'Veces activada',
+      data:Object.values(D.rule_stats),
+      backgroundColor:P.slice(0,Object.keys(D.rule_stats).length),
+      borderRadius:5, borderSkipped:false,
+    }]
+  },
+  options:{
+    indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{beginAtZero:true,grid:{color:gridC}},
+      y:{grid:{display:false},ticks:{font:{size:10}}}
+    }
+  }
+});
+
+/* 3 — Alertas por Hora */
+new Chart(document.getElementById('cHour'),{
+  type:'line',
+  data:{
+    labels:Array.from({length:24},(_,i)=>i+':00'),
+    datasets:[
+      {
+        label:'Alertas de Fraude',
+        data:Object.values(D.fraud_by_hour),
+        borderColor:C.crimson, backgroundColor:'rgba(220,53,69,0.08)',
+        fill:true, tension:.4, pointRadius:3, pointHoverRadius:6,
+        pointBackgroundColor:C.crimson, borderWidth:2,
+      },
+      {
+        label:'Transacciones Limpias',
+        data:Object.values(D.legit_by_hour),
+        borderColor:C.teal, backgroundColor:'rgba(46,196,182,0.05)',
+        fill:true, tension:.4, pointRadius:2, pointHoverRadius:5,
+        pointBackgroundColor:C.teal, borderWidth:2,
+      }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'top'}},
+    scales:{
+      y:{beginAtZero:true,grid:{color:gridC}},
+      x:{grid:{display:false},ticks:{maxRotation:45,font:{size:9}}}
+    }
+  }
+});
+
+/* 4 — Nivel de Riesgo */
+new Chart(document.getElementById('cRisk'),{
+  type:'doughnut',
+  data:{
+    labels:Object.keys(D.risk_breakdown),
+    datasets:[{
+      data:Object.values(D.risk_breakdown),
+      backgroundColor:[C.crimson,C.amber,C.teal],
+      borderColor:'var(--bg-card)', borderWidth:3, hoverOffset:8,
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false, cutout:'60%',
+    plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}
+  }
+});
+
+/* 5 — Montos */
+new Chart(document.getElementById('cAmount'),{
+  type:'bar',
+  data:{
+    labels:Object.keys(D.amount_ranges),
+    datasets:[{
+      label:'Alertas',
+      data:Object.values(D.amount_ranges),
+      backgroundColor:[C.teal,C.navy,C.steel,C.amber,C.crimson],
+      borderRadius:5, borderSkipped:false,
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      y:{beginAtZero:true,grid:{color:gridC}},
+      x:{grid:{display:false}}
+    }
+  }
+});
+
+/* 6 — Ubicación */
+const ll=Object.keys(D.location_counts);
+new Chart(document.getElementById('cLoc'),{
+  type:'polarArea',
+  data:{
+    labels:ll,
+    datasets:[{
+      data:Object.values(D.location_counts),
+      backgroundColor:P.slice(0,ll.length).map(c=>c.replace('0.85','0.55')),
+      borderColor:P.slice(0,ll.length), borderWidth:1,
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'right',labels:{font:{size:10}}}},
+    scales:{r:{grid:{color:gridC},ticks:{display:false}}}
+  }
+});
+
+/* 7 — Fin de semana */
+new Chart(document.getElementById('cWeek'),{
+  type:'doughnut',
+  data:{
+    labels:Object.keys(D.weekend_vs_weekday),
+    datasets:[{
+      data:Object.values(D.weekend_vs_weekday),
+      backgroundColor:[C.navy,C.gold],
+      borderColor:'var(--bg-card)', borderWidth:3, hoverOffset:8,
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false, cutout:'55%',
+    plugins:{legend:{position:'bottom'}}
+  }
+});
+
+/* 8 — Categoría */
+const cl=Object.keys(D.category_counts);
+new Chart(document.getElementById('cCat'),{
+  type:'pie',
+  data:{
+    labels:cl,
+    datasets:[{
+      data:Object.values(D.category_counts),
+      backgroundColor:P.slice(0,cl.length),
+      borderColor:'rgba(20,29,47,0.9)', borderWidth:2, hoverOffset:8,
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}
+  }
+});
+
+/* ── Tabla ── */
+const tb=document.querySelector('#tbl tbody');
+D.top_alerts.forEach(a=>{
+  const bc=a.level==='CRITICAL'?'critico':'alto';
+  const lvl=a.level==='CRITICAL'?'CR\u00cdTICO':'ALTO';
+  const rh=a.rules.map(r=>`<span class="rtag">${r}</span>`).join('');
+  tb.innerHTML+=`
+    <tr>
+      <td style="font-family:monospace;font-size:.72rem;color:var(--text-muted)">${a.id}&hellip;</td>
+      <td style="font-weight:600">${a.user}</td>
+      <td>${a.timestamp}</td>
+      <td style="color:var(--teal);font-weight:700">${a.amount.toLocaleString('es-MX',{style:'currency',currency:'MXN'})}</td>
+      <td>${a.location}</td>
+      <td style="font-weight:800;color:var(--gold)">${a.score}</td>
+      <td><span class="badge ${bc}">${lvl}</span></td>
+      <td><div style="display:flex;flex-wrap:wrap;gap:3px">${rh}</div></td>
+    </tr>`;
+});
+</script>
+</body>
+</html>

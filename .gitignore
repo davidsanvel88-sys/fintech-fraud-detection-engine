@@ -30,4 +30,3 @@ Thumbs.db
 
 # Generated outputs (se regeneran con python main.py)
 fraud_alerts.json
-dashboard.html
