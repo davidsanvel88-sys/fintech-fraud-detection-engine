@@ -1,0 +1,50 @@
+# ============================================================================
+# Fraud Detection Engine — Configuration
+# ============================================================================
+# All thresholds and parameters are defined here.
+# Modify this file to adjust rule sensitivity without touching source code.
+
+# --- Data Source ---
+data:
+  input_file: "../fraud_detection_improved.csv"
+  output_file: "fraud_alerts.json"
+
+# --- Rule Thresholds ---
+rules:
+  high_amount:
+    threshold: 15000       # Amount above this triggers HighAmountRule
+    points: 50
+
+  odd_hours:
+    start_hour: 22         # Hour range considered "odd" (22:00 - 05:00)
+    end_hour: 5
+    points: 30
+
+  velocity:
+    min_hours: 0.17        # Less than ~10 minutes between transactions
+    points: 40
+
+  unusual_amount:
+    ratio_threshold: 3.0   # Transaction amount / user average ratio
+    points: 35
+
+  location_change:
+    max_hours: 2.0         # Location changed within this time window
+    points: 30
+
+  foreign_tx:
+    points: 25
+
+  new_device:
+    points: 20
+
+# --- Alert Thresholds ---
+alerting:
+  risk_score_threshold: 75   # Minimum score to generate a FRAUD ALERT
+  critical_threshold: 120    # Score above this is CRITICAL, otherwise HIGH
+
+# --- Logging ---
+logging:
+  level: "INFO"              # DEBUG | INFO | WARNING | ERROR
+  format: "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
+  date_format: "%Y-%m-%d %H:%M:%S"

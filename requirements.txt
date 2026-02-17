@@ -1,0 +1,7 @@
+# Fraud Detection Engine — Dependencies
+# Python 3.10+ required
+
+pandas>=2.0.0
+PyYAML>=6.0
+rich>=13.0.0
+pytest>=7.4.0
